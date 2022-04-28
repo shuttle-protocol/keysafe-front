@@ -30,7 +30,6 @@ export function encrypt(rawText, key) {
     }
 }
 
-
 export function decrypt(secretText, key) {
     //TODO: check if secretText is hex or binary
     console.log("decrypt content ", secretText, " with ", key);

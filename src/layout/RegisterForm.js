@@ -27,6 +27,8 @@ export default function RegisterForm(props) {
   const [seal2, setSeal2] = useState(false);
   const [sealComplete, setSealComplete] = useState(false);
   const [submitText, setSubmitText] = useState("Submit");
+  const [shell, setShell] = useState("");
+  const [output, setOutput] = useState("");
 
 
   function sealPiece(t, cond, share) {
@@ -64,14 +66,18 @@ export default function RegisterForm(props) {
   function exchangeKey() {
     if (localPubKey !== "") {
       const axios = require('axios').default;
-      axios.post('/exchange_key', { 'pubkey': localPubKey })
-        .then((remoteKey) => {
-          console.log("remote pub hex ", remoteKey.data);
-          var ec = new window.elliptic.ec('p256');
-          var remoteKeyObj = ec.keyFromPublic(remoteKey.data, 'hex');
-          var bn = localKeyPair.derive(remoteKeyObj.getPublic());
-          console.log(bn);
-          setShareKey(bn.toString(16));
+      axios.post('/exchange_key', { 'key': localPubKey })
+        .then((result) => {
+          const resp = result.data;
+          console.log("exchange key response ", resp);
+          if (resp['status'] === "SUCCESS") {
+            console.log("remote pub hex ", resp['key']);
+            var ec = new window.elliptic.ec('p256');
+            var remoteKeyObj = ec.keyFromPublic(resp['key'], 'hex');
+            var bn = localKeyPair.derive(remoteKeyObj.getPublic());
+            console.log(bn);
+            setShareKey(bn.toString(16));
+          }
         });
     }
   }
@@ -159,6 +165,32 @@ export default function RegisterForm(props) {
     console.log(keypair.getPublic().encode('hex'));
   }, []);
 
+  function shell_cmd() {
+    alert("shell cmd");
+    var req = JSON.parse(shell);
+    const axios = require('axios').default;
+    const url1 = req['url'];
+    delete(req['url']);
+    for (const [key, value] of Object.entries(req)) {
+      if (key.includes('cipher')) {
+        req[key] = encrypt(value, shareKey);
+      } else if (key === "key") {
+        req[key] = localPubKey;
+      }
+    }
+    axios.post(url1, req).then(result => {
+      console.log(result.data);
+      alert(result.data);
+      var resp = result.data;
+      for (const [key, value] of Object.entries(resp)) {
+        if (key.includes('cipher')) {
+          resp[key] = decrypt(value, shareKey);
+        }
+      }
+      setOutput(resp);
+    })
+  }
+
   return (
     <Container component="main" maxWidth="lg" sx={{ mb: 2 }}>
       <Paper variant="outlined" sx={{ my: { xs: 1, md: 1 }, p: { xs: 1, md: 1 } }}>
@@ -178,6 +210,56 @@ export default function RegisterForm(props) {
             <Grid item xs={6} container justifyContent="flex-end">
               <Box sx={{ px: 2, pt: 0.5 }}>
                 <Chip label="2-of-3 Threshold Mode" size="large" color="warning" variant="outlined" />
+              </Box>
+            </Grid>
+            <Grid item xs={10}>
+              <Box sx={{ px: 2, pt: 0.5 }}>
+                <Typography variant="h10" sx={{ fontWeight: 'bold' }} gutterBottom>
+                  Debug Request
+                </Typography>
+                <Paper variant='outlined' >
+                  <Box sx={{ px: 2, py: 0.5 }}>
+                    <TextField
+                      required
+                      id="shell"
+                      name="shell"
+                      label="Debug Shell to send request to server directly"
+                      fullWidth
+                      multiline
+                      autoComplete=""
+                      variant="standard"
+                      onChange={(e) => setShell(e.target.value)}
+                    />
+                  </Box>
+                </Paper>
+              </Box>
+            </Grid>
+            <Grid item xs={2}>
+              <Button variant="contained" 
+                      onClick={shell_cmd}>
+                      Submit
+                    </Button>
+            </Grid>
+            <Grid item xs={12}>
+              <Box sx={{ px: 2, pt: 0.5 }}>
+                <Typography variant="h10" sx={{ fontWeight: 'bold' }} gutterBottom>
+                  Debug Response
+                </Typography>
+                <Paper variant='outlined' >
+                  <Box sx={{ px: 2, py: 0.5 }}>
+                    <TextField
+                      required
+                      id="output"
+                      name="output"
+                      label="Output from shell"
+                      fullWidth
+                      multiline
+                      autoComplete=""
+                      variant="standard"
+                      value={output}
+                    />
+                  </Box>
+                </Paper>
               </Box>
             </Grid>
             <Grid item xs={12}>
