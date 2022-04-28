@@ -69,15 +69,14 @@ export default function RegisterForm(props) {
       axios.post('/exchange_key', { 'key': localPubKey })
         .then((result) => {
           const resp = result.data;
-          console.log("exchange key response ", resp);
-          if (resp['status'] === "SUCCESS") {
-            console.log("remote pub hex ", resp['key']);
-            var ec = new window.elliptic.ec('p256');
-            var remoteKeyObj = ec.keyFromPublic(resp['key'], 'hex');
-            var bn = localKeyPair.derive(remoteKeyObj.getPublic());
-            console.log(bn);
-            setShareKey(bn.toString(16));
-          }
+          console.log("exchange key response ", resp);          
+          console.log("remote pub hex ", resp);
+          var ec = new window.elliptic.ec('p256');
+          var remoteKeyObj = ec.keyFromPublic(resp, 'hex');
+          var bn = localKeyPair.derive(remoteKeyObj.getPublic());
+          console.log(bn);
+          setShareKey(bn.toString(16));
+
         });
     }
   }
