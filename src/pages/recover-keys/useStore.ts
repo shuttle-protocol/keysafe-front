@@ -4,10 +4,10 @@ import { AccountChain, UserInfo } from "stores/account/types";
 import create from "zustand";
 
 export enum AuthType {
-  EMAIL,
-  PASS,
-  GOOGLE,
-  GithubAuth,
+  EMAIL = "email",
+  PASS = "password",
+  GOOGLE = "gauth",
+  GithubAuth = "oauth@github",
 }
 
 export enum StepType {
@@ -22,6 +22,7 @@ type Auth = {
   type: AuthType;
   shard?: string;
   success?: boolean;
+  enable?: boolean;
 } & Record<string, any>;
 
 interface AuthState {
@@ -57,6 +58,7 @@ const useStore = create<
     setActiveAuth: (type: AuthType | null) => void;
     setAuth: (auth: Auth) => void;
     getAuth: (type: AuthType) => Auth;
+    setAuths: (auths: Auth[]) => void;
     setAccountChain: (accountChain: AccountChain) => void;
     setAccountStore: (store: AccountStore) => void;
     setUserInfo: (userInfo: UserInfo) => void;
@@ -82,6 +84,7 @@ const useStore = create<
     }
     return auth;
   },
+  setAuths: (auths: Auth[]) => set({ auths }),
   setAccountChain: (accountChain: AccountChain) => set({ accountChain }),
   setAccountStore: (accountStore: AccountStore) => set({ accountStore }),
   setUserInfo: (userInfo: UserInfo) => set({ userInfo }),
